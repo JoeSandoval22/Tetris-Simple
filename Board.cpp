@@ -36,10 +36,10 @@ Board::~Board() {
 
 //Barre por completo con el tablero, este método ayuda a liberar memoria
 void Board::clearBoard() {
-    RowNode* current = head;
-	while (current != nullptr) {
+	while (head != nullptr) {
+		RowNode* toDelete = head;
 		head = head->next;
-		delete current;	
+		delete head;	
 	}
 	rowCounter = 0;
 }
@@ -54,9 +54,29 @@ RowNode* Board::getRowIndex(int index) const {
 	return current;
 }
 
-//Limpia una única fila siempre y cuando se cumpla que toda está llena.
+//Limpia una �nica fila siempre y cuando se cumpla que toda est� llena.
 int Board::clearCompleteRows() {
-	
+	int clearedRows = 0;
+	RowNode* current = head;
+	RowNode* previous = nullptr;
+	while(current != nullptr){
+		if(isACompleteRow(current)){
+			RowNode* toDelete = current;
+			current = current->next;
+			if(toDelete == head){
+				head = head->next;
+			}else{
+				previous->next = current;
+			}
+			delete toDelete;
+			insertEmptyRowAtTop();
+			clearedRows++;
+		}else{
+			previous = current;
+			current = current->next;
+		}
+	}
+	return clearedRows;
 }
 
 //Verifica que una posición ya está llena por otro bloque
@@ -78,5 +98,4 @@ void Board::setCell(int row, int column, int value) {
 	if (current != nullptr) {
 		current->cells[column] = value;
 	}
-
 }
