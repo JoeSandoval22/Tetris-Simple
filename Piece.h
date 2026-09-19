@@ -1,6 +1,8 @@
 #pragma once
 #ifndef PIECE_H
 #define PIECE_H
+#include <ctime>
+#include <cstdlib>
 
 struct QueueNode {
 	int pieceType;
@@ -24,7 +26,7 @@ public:
 
 	void addPiece(int pieceType);
 	int deletePiece();
-	int showPiece(int position);
+	int getPieceAt(int position);
 	bool isEmpty() const;
 	int getPieceSize() const;
 

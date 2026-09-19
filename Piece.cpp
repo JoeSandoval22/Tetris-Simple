@@ -1,37 +1,80 @@
 #include "Piece.h"
-
-void Piece::generateBag()
-{
+/*
+Este método genera bolsas de piezas por medio la función rand() la cual genera ayuda a generar figuar
+de forma aleatoria con la cantidad de piezas que restan en la bolsa. También se realiza un intercambio
+dentro de la función para lograr que no se repitan piezas cada vez que salen.
+*/
+void Piece::generateBag() {
+	int bag[7] = {1,2,3,4,5,6,7};
+	for(int i = 6; i > 0; i--){
+		int j = rand() % (i + 1);
+		int aux = bag[i];
+		bag[i] = bag[j];
+		bag[j] = aux;
+	}
+	for(int i = 0; i < 7; i++){
+		addPiece(bag[i]);
+	}
 }
 
-Piece::Piece()
-{
+Piece::Piece(){
+	front = nullptr;
+	back = nullptr;
+	size = 0;
+	generateBag();
+	generateBag();
+} 
+
+Piece::~Piece() {
+	while(!isEmpty()){
+		deletePiece();
+	}
 }
 
-Piece::~Piece()
-{
+void Piece::addPiece(int pieceType) {
+	QueueNode* newNode = new QueueNode(pieceType);
+	if(isEmpty()){
+		front = newNode;
+		back = newNode;
+	} else{
+		back->next = newNode;
+		back = newNode;
+	}
+	size++;
+}
+// Este método debe llamarse ya dentro del juego para liberar la memoria
+int Piece::deletePiece() {
+	if(isEmpty()) return -1;
+	QueueNode* current = front;
+	int piece = current->pieceType;
+	front = front->next;
+	if(front == nullptr){
+		back = nullptr;
+	}
+	delete current;
+	size--;
+	if(size <= 7) {
+		generateBag();
+	}
+	return piece;
+}
+// Al igual que el anterior hay que llamarlo dentro del juego
+int Piece::getPieceAt(int position) {
+	if(isEmpty() || position <= 0) return -1;
+	QueueNode* current = front;
+	for(int i = 1; i < position; i++){
+		if(current->next == nullptr){
+			return -1;
+		}
+		current = current->next;
+	}
+	return current->pieceType;
 }
 
-void Piece::addPiece(int pieceType)
-{
+bool Piece::isEmpty() const {
+	return front == nullptr;
 }
 
-int Piece::deletePiece()
-{
-	return 0;
-}
-
-int Piece::showPiece(int position)
-{
-	return 0;
-}
-
-bool Piece::isEmpty() const
-{
-	return false;
-}
-
-int Piece::getPieceSize() const
-{
-	return 0;
+int Piece::getPieceSize() const {
+	return size;
 }
