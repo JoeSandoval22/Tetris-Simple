@@ -26,7 +26,7 @@ public:
 
 	void insertSorted(EventData event);
 	bool popFront(EventData& outEvent);
-	bool showNextEvent(float currentTiem, EventData& outEvent);
+	bool showNextEvent(EventData& outEvent) const;
 	bool isEmpty() const;
 	void clearEvents();
 };

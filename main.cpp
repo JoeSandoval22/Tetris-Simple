@@ -4,49 +4,41 @@
 #include "Piece.h"
 #include "HoldStack.h"
 #include "MovementList.h"
+#include "EventQueue.h"
 using namespace std;
 
 int main (int argc, char *argv[]) {
-	MovementList history;
-	MovePiece moveOut;
+	EventQueue queue;
 	
-	// 1. Registro inicial de movimientos
-	history.registerMove({1, 1, 4, 0, 0});
-	history.registerMove({1, 2, 5, 0, 90});
-	history.registerMove({1, 3, 6, 0, 180});
+	// Insertar eventos desordenados: {eventType, triggerTime, parameter}
+	queue.insertSorted({1, 5.0f, 100.0f}); // Evento tipo 1 a los 5.0s
+	queue.insertSorted({2, 1.5f, 25.5f});  // Evento tipo 2 a los 1.5s
+	queue.insertSorted({3, 10.0f, 1.0f});  // Evento tipo 3 a los 10.0s
+	queue.insertSorted({2, 2.0f, 50.0f});  // Evento tipo 2 a los 2.0s
+	queue.insertSorted({4, 2.0f, 0.5f});   // Evento tipo 4 a los 2.0s (mismo tiempo, entra después)
 	
-	std::cout << "--- 1. Probando Undo ---" << std::endl;
-	while (history.undo(moveOut)) {
-		std::cout << "Deshecho -> Pieza: " << moveOut.pieceType 
-			<< ", Pos X: " << moveOut.targetX 
-			<< ", Pos Y: " << moveOut.targetY << std::endl;
+	// Validar el próximo evento sin sacarlo (peek)
+	EventData nextEv;
+	if (queue.showNextEvent(nextEv)) {
+		std::cout << "Proximo evento en cola (deberia ser a los 1.5s):\n";
+		std::cout << "Tipo: " << nextEv.eventType 
+			<< " | Tiempo: " << nextEv.triggerTime 
+			<< "s | Parametro: " << nextEv.parameter << "\n\n";
 	}
 	
-	std::cout << "\n--- 2. Probando Redo ---" << std::endl;
-	while (history.redo(moveOut)) {
-		std::cout << "Rehecho -> Pieza: " << moveOut.pieceType 
-			<< ", Pos X: " << moveOut.targetX 
-			<< ", Pos Y: " << moveOut.targetY << std::endl;
+	std::cout << "Procesando la cola en orden cronologico:\n";
+	std::cout << "----------------------------------------\n";
+	
+	EventData currentEvent;
+	while (queue.popFront(currentEvent)) {
+		std::cout << "Tiempo: " << currentEvent.triggerTime 
+			<< "s | Tipo: " << currentEvent.eventType 
+			<< " | Parametro: " << currentEvent.parameter << "\n";
 	}
 	
-	// 3. Probando el truncamiento del historial (rama alternativa)
-	std::cout << "\n--- 3. Probando Truncamiento por Nuevo Movimiento ---" << std::endl;
-	history.undo(moveOut); // Retrocede a pieza 2
-	history.undo(moveOut); // Retrocede a pieza 1
-	std::cout << "Se realizaron dos undos. Registrando un movimiento nuevo (Pieza 99)..." << std::endl;
-	history.registerMove({1, 99, 7, 0, 270}); // Debe borrar el futuro (piezas 2 y 3 anteriores)
-	
-	std::cout << "Intentando hacer redo tras el nuevo registro:" << std::endl;
-	if (!history.redo(moveOut)) {
-		std::cout << "Redo bloqueado correctamente (historial futuro borrado con éxito)." << std::endl;
-	}
-	
-	// 4. Probando recorrido desde el inicio (resetToStart y getNextMoveStep)
-	std::cout << "\n--- 4. Probando Replay (resetToStart y getNextMoveStep) ---" << std::endl;
-	history.resetToStart();
-	while (history.getNextMoveStep(moveOut)) {
-		std::cout << "Paso registrado -> Pieza: " << moveOut.pieceType 
-			<< ", Pos X: " << moveOut.targetX << std::endl;
+	std::cout << "----------------------------------------\n";
+	if (queue.isEmpty()) {
+		std::cout << "Cola vaciada y memoria liberada correctamente.\n";
 	}
 	
 	return 0;
