@@ -12,26 +12,24 @@ struct MovePiece {
 
 struct DoubleNode {
 	MovePiece move;
-	DoubleNode* prev;
+	DoubleNode* previous;
 	DoubleNode* next;
 
-	DoubleNode(MovePiece data) : move(data), prev(nullptr), next(nullptr){}
+	DoubleNode(MovePiece data) : move(data), previous(nullptr), next(nullptr){}
 };
 
-class MovementList
-{
+class MovementList {
 private:
 	DoubleNode* head;
 	DoubleNode* tail;
-	DoubleNode* actual;
-
+	DoubleNode* current;
 public:
 	MovementList();
 	~MovementList();
 
 	void registerMove(MovePiece data);
 	bool undo(MovePiece& outMove);
-	bool redo(MovePiece& outMode);
+	bool redo(MovePiece& outMove);
 	void resetToStart();
 	bool getNextMoveStep(MovePiece& outMove);
 	void clearHistory();

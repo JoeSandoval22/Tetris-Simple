@@ -3,54 +3,50 @@
 #include "Board.h"
 #include "Piece.h"
 #include "HoldStack.h"
+#include "MovementList.h"
 using namespace std;
 
 int main (int argc, char *argv[]) {
-	HoldStack hold;
-	int piezaActual = 1; // Representa una pieza, ej: 1 = 'I'
-	int piezaSiguienteDeCola = 2; // 2 = 'T'
+	MovementList history;
+	MovePiece moveOut;
 	
-	std::cout << "--- TURNO 1 ---\n";
-	std::cout << "Pieza activa: " << piezaActual << "\n";
+	// 1. Registro inicial de movimientos
+	history.registerMove({1, 1, 4, 0, 0});
+	history.registerMove({1, 2, 5, 0, 90});
+	history.registerMove({1, 3, 6, 0, 180});
 	
-	// 1. Primer uso: Hold está vacío
-	if (hold.canSwap()) {
-		std::cout << "Accion: Mandar pieza al Hold.\n";
-		hold.push(piezaActual);
-		hold.setUsedInTurn(true); // Se bloquea por este turno
-		
-		// Como el Hold estaba vacío, simulamos que sacamos una de la cola principal
-		piezaActual = piezaSiguienteDeCola; 
-		std::cout << "Hold actual: " << hold.peek() << " | Nueva pieza activa: " << piezaActual << "\n";
+	std::cout << "--- 1. Probando Undo ---" << std::endl;
+	while (history.undo(moveOut)) {
+		std::cout << "Deshecho -> Pieza: " << moveOut.pieceType 
+			<< ", Pos X: " << moveOut.targetX 
+			<< ", Pos Y: " << moveOut.targetY << std::endl;
 	}
 	
-	// 2. Intento de trampa: Tratar de hacer Hold otra vez antes de que la pieza toque suelo
-	std::cout << "\nIntentando usar Hold otra vez...\n";
-	if (!hold.canSwap()) {
-		std::cout << "[BLOQUEADO] El juego no te deja cambiar dos veces en el mismo turno.\n";
+	std::cout << "\n--- 2. Probando Redo ---" << std::endl;
+	while (history.redo(moveOut)) {
+		std::cout << "Rehecho -> Pieza: " << moveOut.pieceType 
+			<< ", Pos X: " << moveOut.targetX 
+			<< ", Pos Y: " << moveOut.targetY << std::endl;
 	}
 	
-	// 3. Fin del turno: La pieza colisiona con el tablero
-	std::cout << "\n--- FIN DEL TURNO 1 (La pieza choca) ---\n";
-	hold.setUsedInTurn(false); // Reseteamos la bandera
+	// 3. Probando el truncamiento del historial (rama alternativa)
+	std::cout << "\n--- 3. Probando Truncamiento por Nuevo Movimiento ---" << std::endl;
+	history.undo(moveOut); // Retrocede a pieza 2
+	history.undo(moveOut); // Retrocede a pieza 1
+	std::cout << "Se realizaron dos undos. Registrando un movimiento nuevo (Pieza 99)..." << std::endl;
+	history.registerMove({1, 99, 7, 0, 270}); // Debe borrar el futuro (piezas 2 y 3 anteriores)
 	
-	// Empieza turno 2 con una nueva pieza de la cola
-	piezaActual = 3; // 3 = 'L'
+	std::cout << "Intentando hacer redo tras el nuevo registro:" << std::endl;
+	if (!history.redo(moveOut)) {
+		std::cout << "Redo bloqueado correctamente (historial futuro borrado con éxito)." << std::endl;
+	}
 	
-	std::cout << "\n--- TURNO 2 ---\n";
-	std::cout << "Pieza activa: " << piezaActual << "\n";
-	
-	// 4. Segundo uso: Ya hay una pieza en Hold (la 1)
-	if (hold.canSwap()) {
-		std::cout << "Accion: Intercambiar pieza actual con el Hold.\n";
-		
-		int piezaQueSale = hold.pop(); // Saco la 1
-		hold.push(piezaActual);        // Meto la 3
-		hold.setUsedInTurn(true);      // Bloqueo de nuevo
-		
-		piezaActual = piezaQueSale;    // La pieza activa pasa a ser la que salió del Hold
-		
-		std::cout << "Hold actual: " << hold.peek() << " | Nueva pieza activa: " << piezaActual << "\n";
+	// 4. Probando recorrido desde el inicio (resetToStart y getNextMoveStep)
+	std::cout << "\n--- 4. Probando Replay (resetToStart y getNextMoveStep) ---" << std::endl;
+	history.resetToStart();
+	while (history.getNextMoveStep(moveOut)) {
+		std::cout << "Paso registrado -> Pieza: " << moveOut.pieceType 
+			<< ", Pos X: " << moveOut.targetX << std::endl;
 	}
 	
 	return 0;
