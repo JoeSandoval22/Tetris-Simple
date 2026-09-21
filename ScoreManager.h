@@ -2,6 +2,8 @@
 #ifndef SCOREMANAGER_H
 #define SCOREMANAGER_H
 #include <string>
+#include <fstream>
+const int MAX_RECORDS = 10000;
 
 struct ScoreRecord {
 	std::string playerName;
@@ -11,10 +13,10 @@ struct ScoreRecord {
 class ScoreManager
 {
 private:
-	ScoreRecord scores[100];
+	ScoreRecord scores[MAX_RECORDS];
 	int recordCount;
 
-	void quikSort(int low, int high);
+	void quickSort(int low, int high);
 	int partition(int low, int high);
 
 public:
