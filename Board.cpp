@@ -39,7 +39,7 @@ void Board::clearBoard() {
 	while (head != nullptr) {
 		RowNode* toDelete = head;
 		head = head->next;
-		delete head;	
+		delete toDelete;	
 	}
 	rowCounter = 0;
 }
@@ -69,6 +69,7 @@ int Board::clearCompleteRows() {
 				previous->next = current;
 			}
 			delete toDelete;
+			rowCounter--;
 			insertEmptyRowAtTop();
 			clearedRows++;
 		}else{

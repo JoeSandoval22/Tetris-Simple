@@ -1,13 +1,20 @@
 #pragma once
 #ifndef MOVEMENTLIST_H
 #define MOVEMENTLIST_H
+#include <iostream>
+#include <string>
 
 struct MovePiece {
-	int actionType;
+	std::string actionType;
 	int pieceType;
 	int targetX;
 	int targetY;
 	int rotation;
+	
+	MovePiece(std::string newActionType, int newPieceType, int newTargetX,int newTargetY, int newRotation) : actionType(newActionType), 
+		pieceType(newPieceType), targetX(newTargetX), targetY(newTargetY), rotation(newRotation){}
+	
+	MovePiece() : actionType(""), pieceType(0), targetX(0), targetY(0), rotation(0) {}
 };
 
 struct DoubleNode {

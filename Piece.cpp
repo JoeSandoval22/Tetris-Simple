@@ -5,8 +5,8 @@ de forma aleatoria con la cantidad de piezas que restan en la bolsa. También se 
 dentro de la función para lograr que no se repitan piezas cada vez que salen.
 */
 void Piece::generateBag() {
-	int bag[7] = {1,2,3,4,5,6,7};
-	for(int i = 6; i > 0; i--){
+	int bag[7] = {0,1,2,3,4,5,6};
+	for(int i = 6; i >= 0; i--){
 		int j = rand() % (i + 1);
 		int aux = bag[i];
 		bag[i] = bag[j];

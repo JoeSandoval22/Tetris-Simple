@@ -5,9 +5,18 @@
 #include "Board.h"
 #include "Piece.h"
 #include "HoldStack.h"
-#include  "MovementList.h"
+#include "MovementList.h"
 #include "EventQueue.h"
 #include "ScoreManager.h"
+#include "TetrominoShape.h"
+
+enum class GameState {
+	MENU,
+    PLAYING,
+	PAUSE,
+    GAME_OVER,
+	REPLAY
+};
 
 class GameEngine {
 private:
@@ -19,11 +28,12 @@ private:
 	MovementList movList;
 	EventQueue eventQueue;
 	ScoreManager scoreManager;
+	GameState currentState;
 
 	int currentPieceType;
 	int currentX;
 	int currentY;
-	int currentRotarion;
+	int currentRotation;
 	int score;
 	float gameTime;
 	float dropTimer;
@@ -34,9 +44,14 @@ private:
 	void processInput();
 	void update(float deltaTime);
 	void render();
-	bool showCollision(int posX, int posY, int newRotation) const;
+	
+	bool isValidPosition(int pieceType, int rotation, int newX, int newY) const;
 	void lockPiece();
 	void spawnNewPiece();
+	void holdCurrentPiece();
+	
+	void handlePlayInput(sf::Keyboard::Key key);
+	void handleReplayInput(sf::Keyboard::Key key);
 
 public:
 	GameEngine();
