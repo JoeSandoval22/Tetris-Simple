@@ -22,6 +22,7 @@ void GameEngine::update(float deltaTime) {
 	if(isTimeExpired()){
 		gameTime = 0.0f;
 		currentState = GameState::GAME_OVER;
+		std::cout << "TIEMPO EXPIRADO..."<<std::endl;
 		return;
 	}
 	
@@ -51,7 +52,7 @@ void GameEngine::update(float deltaTime) {
 }
 
 /*
-Permite que las piezas sean visibles 
+Permite que las piezas creadas sean visibles, así como su animación de eliminación de filas y caída.
 */
 void GameEngine::render() {
 	window.clear(sf::Color::Black);
@@ -147,7 +148,7 @@ void GameEngine::spawnNewPiece() {
 
 //Controla el tiempo de partida en el juego.
 bool GameEngine::isTimeExpired() const{
-	return gameTime == 0.0f;
+	return gameTime <= 0.0f;
 }
 /* 
 Permite mover, sostener, rotar y cambiar de pieza (una vez por turno para este último).
@@ -234,7 +235,7 @@ GameEngine::GameEngine() {
 	currentY = 0;
 	currentRotation = 0;
 	score = 0;
-	gameTime = 180.0f;
+	gameTime = 10.0f;
 	dropTimer = 0.0f;
 	dropInterval = 0.8f;
 	isGameOver = false;
