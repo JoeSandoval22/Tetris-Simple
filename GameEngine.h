@@ -53,6 +53,7 @@ private:
 	bool isTimeExpired() const;
 	
 	void handlePlayInput(sf::Keyboard::Key key);
+	void handlePausedInput(sf::Keyboard::Key key);
 	void handleReplayInput(sf::Keyboard::Key key);
 
 public:

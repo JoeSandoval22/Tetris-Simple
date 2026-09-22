@@ -8,7 +8,9 @@ void GameEngine::processInput() {
 		if (const auto* keyPress = event->getIf<sf::Event::KeyPressed>()) {
 			if (currentState == GameState::PLAYING) {
 				handlePlayInput(keyPress->code);
-			} else if (currentState == GameState::GAME_OVER) {
+			} else if(currentState == GameState::PAUSE) {
+				handlePausedInput(keyPress->code);
+			} else if(currentState == GameState::GAME_OVER) {
 				handleReplayInput(keyPress->code);
 			}
 		}
@@ -168,7 +170,7 @@ void GameEngine::holdCurrentPiece(){
 	currentY = 0;
 	currentRotation = 0;
 }
-
+//Controla las teclas mientras se está jugando
 void GameEngine::handlePlayInput(sf::Keyboard::Key key){
 	switch (key) {
 	case sf::Keyboard::Key::Left:
@@ -204,8 +206,22 @@ void GameEngine::handlePlayInput(sf::Keyboard::Key key){
 		case sf::Keyboard::Key::C:
 			holdCurrentPiece();
 		break;
+		
+		case sf::Keyboard::Key::P:
+			currentState = GameState::PAUSE;
+		break;
 	
 	default:
+		break;
+	}
+}
+//Controla el juego mientras el juego está en pausa.
+void GameEngine::handlePausedInput(sf::Keyboard::Key key){
+	switch(key){
+		case sf::Keyboard::Key::P:
+			currentState = GameState::PLAYING;
+		break;
+	default: 
 		break;
 	}
 }
@@ -235,7 +251,7 @@ GameEngine::GameEngine() {
 	currentY = 0;
 	currentRotation = 0;
 	score = 0;
-	gameTime = 10.0f;
+	gameTime = 180.0f;
 	dropTimer = 0.0f;
 	dropInterval = 0.8f;
 	isGameOver = false;
