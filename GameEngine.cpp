@@ -8,7 +8,7 @@ void GameEngine::processInput() {
 		if (const auto* keyPress = event->getIf<sf::Event::KeyPressed>()) {
 			if (currentState == GameState::PLAYING) {
 				handlePlayInput(keyPress->code);
-			} else if (currentState == GameState::REPLAY) {
+			} else if (currentState == GameState::GAME_OVER) {
 				handleReplayInput(keyPress->code);
 			}
 		}
@@ -16,13 +16,19 @@ void GameEngine::processInput() {
 }
 
 void GameEngine::update(float deltaTime) {
-	if (isGameOver || currentState != GameState::PLAYING) return;
-	gameTime += deltaTime;
-	dropTimer += deltaTime;
+	if(currentState != GameState::PLAYING) return;
+	gameTime -= deltaTime;
 	
-	if (dropTimer >= dropInterval) {
+	if(isTimeExpired()){
+		gameTime = 0.0f;
+		currentState = GameState::GAME_OVER;
+		return;
+	}
+	
+	dropTimer += deltaTime;
+	if(dropTimer >= dropInterval) {
 		dropTimer = 0.0f;
-		if (isValidPosition(currentPieceType, currentRotation, currentX, currentY + 1)) {
+		if(isValidPosition(currentPieceType, currentRotation, currentX, currentY + 1)) {
 			currentY++;
 		} else {
 			std::cout << "1. Fijando pieza..." << std::endl;
@@ -35,21 +41,29 @@ void GameEngine::update(float deltaTime) {
 			spawnNewPiece();
 			
 			std::cout << "4. Pieza generada con exito." << std::endl;
+			
+			if(!isValidPosition(currentPieceType, currentRotation, currentX, currentY)){
+				currentState = GameState::GAME_OVER;
+				return;
+			}
 		}
 	}
 }
 
+/*
+Permite que las piezas sean visibles 
+*/
 void GameEngine::render() {
 	window.clear(sf::Color::Black);
 	
-	if (currentState == GameState::PLAYING || currentState == GameState::PAUSE) {
+	if(currentState == GameState::PLAYING || currentState == GameState::PAUSE) {
 		const float TILE_SIZE = 30.0f;
 		sf::RectangleShape cellShape(sf::Vector2f(TILE_SIZE - 1.0f, TILE_SIZE - 1.0f));
 		
-		// 1. Dibujar los bloques ya fijados en el tablero
-		for (int r = 0; r < 20; r++) {
-			for (int c = 0; c < 10; c++) {
-				if (board.isCellOccupied(r, c)) { // Asegúrate de si es (fila, columna) o (x, y)
+		
+		for(int r = 0; r < 20; r++) {
+			for(int c = 0; c < 10; c++) {
+				if(board.isCellOccupied(r, c)) {
 					cellShape.setFillColor(sf::Color::Cyan);
 					cellShape.setPosition(sf::Vector2f(c * TILE_SIZE, r * TILE_SIZE));
 					window.draw(cellShape);
@@ -57,16 +71,16 @@ void GameEngine::render() {
 			}
 		}
 		
-		if (!piece.isEmpty()) {
+		if(!piece.isEmpty()) {
 			cellShape.setFillColor(sf::Color::Red);
-			for (int r = 0; r < 4; r++) {
-				for (int c = 0; c < 4; c++) {
-					// Solo dibujás si en tu matriz del .h hay un bloque sólido (1)
-					if (PIECE_SHAPES[currentPieceType][currentRotation][r][c] != 0) {
+			for(int r = 0; r < 4; r++) {
+				for(int c = 0; c < 4; c++) {
+					
+					if(PIECE_SHAPES[currentPieceType][currentRotation][r][c] != 0) {
 						int targetX = currentX + c;
 						int targetY = currentY + r;
 						
-						if (targetY >= 0 && targetY < 20 && targetX >= 0 && targetX < 10) {
+						if(targetY >= 0 && targetY < 20 && targetX >= 0 && targetX < 10) {
 							cellShape.setPosition(sf::Vector2f(targetX * TILE_SIZE, targetY * TILE_SIZE));
 							window.draw(cellShape);
 						}
@@ -104,7 +118,7 @@ bool GameEngine::isValidPosition(int pieceType, int rotation, int newX, int newY
 }
 
 /*
-Hace que la pieza se mantenga inamovible en cuanto se coloca sobre otra o en la base del tablero.
+Posiciona una pieza en cuanto colosiona con otra o bien toca el fondo del tablero.
 */
 void GameEngine::lockPiece() {
 	for(int row = 0; row < 4; row++){
@@ -121,7 +135,7 @@ void GameEngine::lockPiece() {
 	}
 }
 /*
-Permite la generación de nuevas piezas llamando a los métodos de la cola de piezas, lo hace una vez por turno.
+Extrae y controla las piezas generadas por la clase Piece.
 */
 void GameEngine::spawnNewPiece() {
 	holdStack.setUsedInTurn(false);
@@ -129,6 +143,11 @@ void GameEngine::spawnNewPiece() {
 	currentX = 3;
 	currentY = 0;
 	currentRotation = 0;
+}
+
+//Controla el tiempo de partida en el juego.
+bool GameEngine::isTimeExpired() const{
+	return gameTime == 0.0f;
 }
 /* 
 Permite mover, sostener, rotar y cambiar de pieza (una vez por turno para este último).
@@ -215,7 +234,7 @@ GameEngine::GameEngine() {
 	currentY = 0;
 	currentRotation = 0;
 	score = 0;
-	gameTime = 0.0f;
+	gameTime = 180.0f;
 	dropTimer = 0.0f;
 	dropInterval = 0.8f;
 	isGameOver = false;

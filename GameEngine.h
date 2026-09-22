@@ -50,6 +50,8 @@ private:
 	void spawnNewPiece();
 	void holdCurrentPiece();
 	
+	bool isTimeExpired() const;
+	
 	void handlePlayInput(sf::Keyboard::Key key);
 	void handleReplayInput(sf::Keyboard::Key key);
 
