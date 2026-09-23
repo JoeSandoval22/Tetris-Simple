@@ -10,6 +10,7 @@
 #include "ScoreManager.h"
 #include "TetrominoShape.h"
 
+
 enum class GameState {
 	MENU,
     PLAYING,
@@ -51,6 +52,10 @@ private:
 	void holdCurrentPiece();
 	
 	bool isTimeExpired() const;
+	
+	bool timeBonusEvent(int rowsCleared);
+	bool punishmentEvents(int rowsCleared);
+	bool rapidDropEvent(int rowsCleared);
 	
 	void handlePlayInput(sf::Keyboard::Key key);
 	void handlePausedInput(sf::Keyboard::Key key);

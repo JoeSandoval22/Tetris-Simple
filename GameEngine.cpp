@@ -21,6 +21,18 @@ void GameEngine::update(float deltaTime) {
 	if(currentState != GameState::PLAYING) return;
 	gameTime -= deltaTime;
 	
+	EventData currentEvent;
+	while (eventQueue.showNextEvent(currentEvent) && gameTime <= currentEvent.triggerTime) {
+		if (eventQueue.popFront(currentEvent)) {
+			std::cout << "Se quito un evento de la cola..." << std::endl;
+			if (currentEvent.eventType == 1) {
+				gameTime += currentEvent.parameter; 
+			}
+			
+			// Aquí podrías procesar otros tipos de eventos (eventType == 2, etc.) si los hay
+		}
+	}
+	
 	if(isTimeExpired()){
 		gameTime = 0.0f;
 		currentState = GameState::GAME_OVER;
@@ -39,7 +51,9 @@ void GameEngine::update(float deltaTime) {
 			
 			std::cout << "2. Limpiando lineas..." << std::endl;
 			int linesCleared = board.clearCompleteRows(); 
-			
+			if(linesCleared >= 2){
+				timeBonusEvent(linesCleared);
+			}
 			std::cout << "3. Generando nueva pieza..." << std::endl;
 			spawnNewPiece();
 			
@@ -152,6 +166,39 @@ void GameEngine::spawnNewPiece() {
 bool GameEngine::isTimeExpired() const{
 	return gameTime <= 0.0f;
 }
+
+/*
+Este método maneja el evento de bonus de tiempo, la mecánica de este funciona rompiendo dos o más filas consecutivas.
+2 filas: +5s y 5 segundos para activar el evento de la cola a la partida
+3 filas: +7.5s y 10 segundos para activar el evento de la cola a la partida
+4 filas: +10s y 15 segundos para activar el evento de la cola a la partida
+*/
+bool GameEngine::timeBonusEvent(int rowsCleared){
+	float bonusTime = 0.0f;
+	bool appliedBonus = false;
+	switch(rowsCleared){
+	case 2:
+		eventQueue.insertSorted({1, gameTime - 5.0f, 5.0f});
+		appliedBonus = true;
+		std::cout<<"\n\n +5 segundos de tiempo."<<std::endl;
+		break;
+	case 3: 
+		eventQueue.insertSorted({1, gameTime - 7.5f, 7.5f});
+		appliedBonus = true;
+		std::cout<<"\n\n +7.5 segundos de tiempo."<<std::endl;
+		break;
+	case 4:
+		eventQueue.insertSorted({1, gameTime - 10.0f, 10.0f});
+		appliedBonus = true;
+		std::cout<<"\n\n +10 segundos de tiempo."<<std::endl;
+		break;
+	default:
+		appliedBonus = false;
+		break;
+	}
+	return appliedBonus;
+}
+
 /* 
 Permite mover, sostener, rotar y cambiar de pieza (una vez por turno para este último).
 */
