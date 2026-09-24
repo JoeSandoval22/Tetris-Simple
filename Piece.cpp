@@ -59,16 +59,17 @@ int Piece::deletePiece() {
 	return piece;
 }
 // Al igual que el anterior hay que llamarlo dentro del juego
-int Piece::getPieceAt(int position) {
-	if(isEmpty() || position <= 0) return -1;
-	QueueNode* current = front;
-	for(int i = 1; i < position; i++){
-		if(current->next == nullptr){
-			return -1;
+int Piece::getPieceAt(int position) const {
+	QueueNode* current = front; 
+	int count = 0;
+	while (current != nullptr) {
+		if (count == position) {
+			return current->pieceType; 
 		}
 		current = current->next;
+		count++;
 	}
-	return current->pieceType;
+	return -1;
 }
 
 bool Piece::isEmpty() const {

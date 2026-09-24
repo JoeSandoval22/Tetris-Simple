@@ -26,7 +26,7 @@ public:
 
 	void addPiece(int pieceType);
 	int deletePiece();
-	int getPieceAt(int position);
+	int getPieceAt(int position) const;
 	bool isEmpty() const;
 	int getPieceSize() const;
 

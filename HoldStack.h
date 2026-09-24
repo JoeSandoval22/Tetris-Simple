@@ -1,6 +1,7 @@
 #pragma once
 #ifndef HOLDSTACK_H
 #define HOLDSTACK_H
+#include "Piece.h"
 
 struct StackNode {
 	int pieceType;
@@ -14,11 +15,12 @@ class HoldStack
 private:
 	StackNode* top;
 	bool usedInTurn;
+	Piece piece;
 
 public: 
 	HoldStack();
 	~HoldStack();
-
+	
 	void push(int pieceType);
 	int pop();
 	int peek() const;

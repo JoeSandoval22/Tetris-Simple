@@ -45,6 +45,8 @@ private:
 	void processInput();
 	void update(float deltaTime);
 	void render();
+	void renderNextPieces(sf::RectangleShape& cellShape);
+	void renderHoldPiece(sf::RectangleShape& cellShape);
 	
 	bool isValidPosition(int pieceType, int rotation, int newX, int newY) const;
 	void lockPiece();
@@ -54,8 +56,8 @@ private:
 	bool isTimeExpired() const;
 	
 	bool timeBonusEvent(int rowsCleared);
-	bool punishmentEvents(int rowsCleared);
-	bool rapidDropEvent(int rowsCleared);
+	bool punishmentEvent(int rowsReached);
+	bool rapidDropEvent();
 	
 	void handlePlayInput(sf::Keyboard::Key key);
 	void handlePausedInput(sf::Keyboard::Key key);

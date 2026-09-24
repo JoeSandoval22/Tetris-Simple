@@ -28,6 +28,7 @@ public:
 	void sortByBubbleSort();
 	void sortByQuickSort();
 	int getRecordCount() const;
+	bool substractRecordCount(int substract);
 	ScoreRecord getRecordAt(int index) const;
 };
 #endif // !SCOREMANAGER_H

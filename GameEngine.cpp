@@ -1,5 +1,9 @@
 #include "GameEngine.h"
 
+/*
+Permite controlar la entrada de las teclas para que handlePlayInput, handlePauseInput y handleReplayInput puedan funcionar bien
+utilizando componentes de SFML.
+*/
 void GameEngine::processInput() {
 	while (const std::optional<sf::Event> event = window.pollEvent()) {
 		if (event->is<sf::Event::Closed>()) {
@@ -17,6 +21,10 @@ void GameEngine::processInput() {
 	}
 }
 
+/*
+Este método permite manejar el control del tiempo para incluir eventos, evaluar posiciones correctas en el tablero, llamar a los generadores de piezas,
+etc. Básicamente es un sistema de control que se llama dentro de run().
+*/
 void GameEngine::update(float deltaTime) {
 	if(currentState != GameState::PLAYING) return;
 	gameTime -= deltaTime;
@@ -29,7 +37,7 @@ void GameEngine::update(float deltaTime) {
 				gameTime += currentEvent.parameter; 
 			}
 			
-			// Aquí podrías procesar otros tipos de eventos (eventType == 2, etc.) si los hay
+			//Colocar el resto de eventos por aquí
 		}
 	}
 	
@@ -54,6 +62,7 @@ void GameEngine::update(float deltaTime) {
 			if(linesCleared >= 2){
 				timeBonusEvent(linesCleared);
 			}
+			
 			std::cout << "3. Generando nueva pieza..." << std::endl;
 			spawnNewPiece();
 			
@@ -62,6 +71,97 @@ void GameEngine::update(float deltaTime) {
 			if(!isValidPosition(currentPieceType, currentRotation, currentX, currentY)){
 				currentState = GameState::GAME_OVER;
 				return;
+			}
+		}
+	}
+}
+/*
+Esta función dibuja la cola de piezas que vienen
+*/
+void GameEngine::renderNextPieces(sf::RectangleShape& cellShape){
+	const float TILE_SIZE = 30.0f;
+	const float SCALE = 0.75f; 
+	const float PANEL_OFFSET_X = 470.0f; 
+	const float PANEL_START_Y = 50.0f;
+	const float ITEM_SPACING = 90.0f;     
+	
+	cellShape.setSize(sf::Vector2f(TILE_SIZE * SCALE, TILE_SIZE * SCALE)); 
+	cellShape.setFillColor(sf::Color::White);                               
+	cellShape.setOutlineThickness(-1.0f);                                  
+	cellShape.setOutlineColor(sf::Color::Black);                          
+	
+	int next0 = piece.getPieceAt(0);
+	int next1 = piece.getPieceAt(1);
+	int next2 = piece.getPieceAt(2);
+	
+	//Dibuja la primera pieza en la fila
+	if (next0 >= 0) {
+		float startY = PANEL_START_Y;
+		for (int r = 0; r < 4; ++r) {
+			for (int c = 0; c < 4; ++c) {
+				if (PIECE_SHAPES[next0][0][r][c] != 0) {
+					cellShape.setPosition(sf::Vector2f(PANEL_OFFSET_X + (c * (TILE_SIZE * SCALE)), startY + (r * (TILE_SIZE * SCALE))));
+					window.draw(cellShape);
+				}
+			}
+		}
+	}
+	
+	//Dibuja la segunda pieza en la fila
+	if (next1 >= 0) {
+		float startY = PANEL_START_Y + ITEM_SPACING;
+		for (int r = 0; r < 4; ++r) {
+			for (int c = 0; c < 4; ++c) {
+				if (PIECE_SHAPES[next1][0][r][c] != 0) {
+					cellShape.setPosition(sf::Vector2f(PANEL_OFFSET_X + (c * (TILE_SIZE * SCALE)), startY + (r * (TILE_SIZE * SCALE))));
+					window.draw(cellShape);
+				}
+			}
+		}
+	}
+	
+	//Dibuja la tercera pieza en la fila
+	if (next2 >= 0) {
+		float startY = PANEL_START_Y + (ITEM_SPACING * 2);
+		for (int r = 0; r < 4; ++r) {
+			for (int c = 0; c < 4; ++c) {
+				if (PIECE_SHAPES[next2][0][r][c] != 0) {
+					cellShape.setPosition(sf::Vector2f(PANEL_OFFSET_X + (c * (TILE_SIZE * SCALE)), startY + (r * (TILE_SIZE * SCALE))));
+					window.draw(cellShape);
+				}
+			}
+		}
+	}
+}
+
+/*
+Esta función dibuja la pieza que se ha cambiado y la posiciona al aldo izquierdo del tablero.
+Esto surgió debido a un error que no pude solucionar y que decidí transformarlo en parte de la dinámica.Ahora esa pieza se puede ver 
+como si fuera un comodín visible para integrarlo cuando sea, además, el cambio a ese comodín reserva la pieza que iba cayendo antes de 
+intercambiarlas.
+*/
+void GameEngine::renderHoldPiece(sf::RectangleShape& cellShape){
+	int holdPieceType = holdStack.peek();
+	if (holdPieceType < 0) return;
+	
+	const float TILE_SIZE = 30.0f;
+	const float SCALE = 0.75f;
+	const float HOLD_PANEL_X = 20.0f; 
+	const float HOLD_PANEL_Y = 60.0f;
+	
+	cellShape.setSize(sf::Vector2f(TILE_SIZE * SCALE, TILE_SIZE * SCALE));
+	cellShape.setOutlineThickness(-1.0f);
+	cellShape.setOutlineColor(sf::Color::Black);
+	cellShape.setFillColor(sf::Color(255, 215, 0)); 
+	
+	for (int r = 0; r < 4; ++r) {
+		for (int c = 0; c < 4; ++c) {
+			if (PIECE_SHAPES[holdPieceType][0][r][c] != 0) {
+				cellShape.setPosition(sf::Vector2f(
+												   HOLD_PANEL_X + (c * (TILE_SIZE * SCALE)),
+												   HOLD_PANEL_Y + (r * (TILE_SIZE * SCALE))
+												   ));
+				window.draw(cellShape);
 			}
 		}
 	}
@@ -75,38 +175,47 @@ void GameEngine::render() {
 	
 	if(currentState == GameState::PLAYING || currentState == GameState::PAUSE) {
 		const float TILE_SIZE = 30.0f;
+		const float BOARD_OFFSET_X = 150.0f;
 		sf::RectangleShape cellShape(sf::Vector2f(TILE_SIZE - 1.0f, TILE_SIZE - 1.0f));
-		
-		
+		//Esto dibuja la cuadrícula del tablero
 		for(int r = 0; r < 20; r++) {
 			for(int c = 0; c < 10; c++) {
+				float drawX = BOARD_OFFSET_X + (c * TILE_SIZE);
+				float drawY = r * TILE_SIZE;
+				
+				cellShape.setPosition(sf::Vector2f(drawX, drawY));
+				
 				if(board.isCellOccupied(r, c)) {
-					cellShape.setFillColor(sf::Color::Cyan);
-					cellShape.setPosition(sf::Vector2f(c * TILE_SIZE, r * TILE_SIZE));
-					window.draw(cellShape);
+					cellShape.setFillColor(sf::Color::Cyan); 
+				} else {
+					cellShape.setFillColor(sf::Color(30, 30, 30)); 
 				}
+				
+				window.draw(cellShape);
 			}
 		}
-		
+		//Aquí dibuja la caída de cada bloque
 		if(!piece.isEmpty()) {
 			cellShape.setFillColor(sf::Color::Red);
 			for(int r = 0; r < 4; r++) {
 				for(int c = 0; c < 4; c++) {
-					
 					if(PIECE_SHAPES[currentPieceType][currentRotation][r][c] != 0) {
 						int targetX = currentX + c;
 						int targetY = currentY + r;
-						
+						//Analiza los límites del tablero para no quedar en posiciones incorrectas
 						if(targetY >= 0 && targetY < 20 && targetX >= 0 && targetX < 10) {
-							cellShape.setPosition(sf::Vector2f(targetX * TILE_SIZE, targetY * TILE_SIZE));
+							float drawX = BOARD_OFFSET_X + (targetX * TILE_SIZE);
+							float drawY = targetY * TILE_SIZE;
+							cellShape.setPosition(sf::Vector2f(drawX, drawY));
 							window.draw(cellShape);
 						}
 					}
 				}
 			}
 		}
+		renderNextPieces(cellShape);
+		renderHoldPiece(cellShape);
 	}
-	
 	window.display();
 }
 
@@ -157,6 +266,7 @@ Extrae y controla las piezas generadas por la clase Piece.
 void GameEngine::spawnNewPiece() {
 	holdStack.setUsedInTurn(false);
 	currentPieceType = piece.deletePiece();
+	int remainingInBag = piece.getPieceSize();
 	currentX = 3;
 	currentY = 0;
 	currentRotation = 0;
@@ -199,6 +309,21 @@ bool GameEngine::timeBonusEvent(int rowsCleared){
 	return appliedBonus;
 }
 
+/*
+Evento pospuesto
+*/
+bool GameEngine::punishmentEvent(int rowsReached){
+	return false;
+}
+
+/*
+Evento pospuesto
+*/
+
+bool GameEngine::rapidDropEvent(){
+	return false;
+}
+
 /* 
 Permite mover, sostener, rotar y cambiar de pieza (una vez por turno para este último).
 */
@@ -207,7 +332,7 @@ void GameEngine::holdCurrentPiece(){
 	holdStack.setUsedInTurn(true);
 	if(holdStack.isEmpty()){
 		holdStack.push(currentPieceType);
-		currentPieceType = piece.deletePiece();
+		spawnNewPiece();
 	} else {
 		int aux = holdStack.pop();
 		holdStack.push(currentPieceType);
@@ -216,7 +341,9 @@ void GameEngine::holdCurrentPiece(){
 	currentX = 3;
 	currentY = 0;
 	currentRotation = 0;
+	dropTimer = 0.0f;
 }
+
 //Controla las teclas mientras se está jugando
 void GameEngine::handlePlayInput(sf::Keyboard::Key key){
 	switch (key) {
@@ -262,7 +389,8 @@ void GameEngine::handlePlayInput(sf::Keyboard::Key key){
 		break;
 	}
 }
-//Controla el juego mientras el juego está en pausa.
+
+//Controla la función de pausa en el juego.
 void GameEngine::handlePausedInput(sf::Keyboard::Key key){
 	switch(key){
 		case sf::Keyboard::Key::P:
@@ -272,7 +400,7 @@ void GameEngine::handlePausedInput(sf::Keyboard::Key key){
 		break;
 	}
 }
-
+//Controla el replay o jugar otra partida (Aún no lo he comprobado).
 void GameEngine::handleReplayInput(sf::Keyboard::Key key){
 	MovePiece outMove;
 	if (key == sf::Keyboard::Key::Left) {
@@ -311,7 +439,6 @@ GameEngine::~GameEngine() {
 
 void GameEngine::run() {
 	sf::Clock clock;
-	spawnNewPiece();
 	
 	while (window.isOpen()) {
 		float deltaTime = clock.restart().asSeconds();

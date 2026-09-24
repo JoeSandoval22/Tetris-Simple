@@ -42,3 +42,4 @@ bool HoldStack::canSwap() const {
 void HoldStack::setUsedInTurn(bool status) {
 	usedInTurn = status;
 }
+

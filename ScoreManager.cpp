@@ -92,3 +92,11 @@ ScoreRecord ScoreManager::getRecordAt(int index) const {
 	}
 	return ScoreRecord{"", 0};
 }
+
+bool ScoreManager::substractRecordCount(int substract){
+	if(recordCount >= substract){
+	   recordCount -= substract;
+	   return true;
+	}
+	return false;
+}
