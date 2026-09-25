@@ -26,6 +26,25 @@ Este método permite manejar el control del tiempo para incluir eventos, evaluar 
 etc. Básicamente es un sistema de control que se llama dentro de run().
 */
 void GameEngine::update(float deltaTime) {
+	if (currentState == GameState::GAME_OVER) {
+		if (isAutoReplay) {
+			replayTimer += deltaTime;
+			if (replayTimer >= 0.15f) { 
+				replayTimer = 0.0f;
+				MovePiece outMove;
+				if (movList.getNextMoveStep(outMove)) {
+					currentPieceType = outMove.pieceType;
+					currentX = outMove.targetX;
+					currentY = outMove.targetY;
+					currentRotation = outMove.rotation;
+				} else {
+					isAutoReplay = false; 
+				}
+			}
+		}
+		return; 
+	}
+	
 	if(currentState != GameState::PLAYING) return;
 	gameTime -= deltaTime;
 	
@@ -44,9 +63,7 @@ void GameEngine::update(float deltaTime) {
 	if(isTimeExpired()){
 		gameTime = 0.0f;
 		currentState = GameState::GAME_OVER;
-		scoreManager.addScore("Jugador", score);
-		scoreManager.sortByQuickSort();
-		scoreManager.saveFile("scores.txt");
+		scoreManager.registerNewScore("Jugador", score);
 		std::cout << "TIEMPO EXPIRADO..."<<std::endl;
 		return;
 	}
@@ -192,28 +209,27 @@ Permite que las piezas creadas sean visibles, así como su animación de eliminaci
 void GameEngine::render() {
 	window.clear(sf::Color::Black);
 	
-	if(currentState == GameState::PLAYING || currentState == GameState::PAUSE) {
+	if(currentState == GameState::PLAYING || currentState == GameState::PAUSE || currentState == GameState::GAME_OVER) {
 		const float TILE_SIZE = 30.0f;
 		const float BOARD_OFFSET_X = 150.0f;
 		sf::RectangleShape cellShape(sf::Vector2f(TILE_SIZE - 1.0f, TILE_SIZE - 1.0f));
-		//Esto dibuja la cuadrícula del tablero
+		
+		//Dibuja el tablero
 		for(int r = 0; r < 20; r++) {
 			for(int c = 0; c < 10; c++) {
 				float drawX = BOARD_OFFSET_X + (c * TILE_SIZE);
 				float drawY = r * TILE_SIZE;
-				
 				cellShape.setPosition(sf::Vector2f(drawX, drawY));
-				
 				if(board.isCellOccupied(r, c)) {
 					cellShape.setFillColor(sf::Color::Cyan); 
 				} else {
 					cellShape.setFillColor(sf::Color(30, 30, 30)); 
 				}
-				
 				window.draw(cellShape);
 			}
 		}
-		//Aquí dibuja la caída de cada bloque
+		
+		//Dibuja la pieza actual o la del replay temporal
 		if(!piece.isEmpty()) {
 			cellShape.setFillColor(sf::Color::Red);
 			for(int r = 0; r < 4; r++) {
@@ -221,7 +237,6 @@ void GameEngine::render() {
 					if(PIECE_SHAPES[currentPieceType][currentRotation][r][c] != 0) {
 						int targetX = currentX + c;
 						int targetY = currentY + r;
-						//Analiza los límites del tablero para no quedar en posiciones incorrectas
 						if(targetY >= 0 && targetY < 20 && targetX >= 0 && targetX < 10) {
 							float drawX = BOARD_OFFSET_X + (targetX * TILE_SIZE);
 							float drawY = targetY * TILE_SIZE;
@@ -232,9 +247,31 @@ void GameEngine::render() {
 				}
 			}
 		}
+		
 		renderNextPieces(cellShape);
 		renderHoldPiece(cellShape);
 		renderScore();
+		
+		//Muestra la pantalla y los controles del replay
+		if (currentState == GameState::GAME_OVER) {
+			
+			sf::RectangleShape overlay(sf::Vector2f(10 * TILE_SIZE, 20 * TILE_SIZE));
+			overlay.setPosition(sf::Vector2f(BOARD_OFFSET_X, 0.0f)); 
+			overlay.setFillColor(sf::Color(0, 0, 0, 180)); 
+			window.draw(overlay);
+			
+			if (fontLoaded) {
+				sf::Text gameOverText(font, "GAME OVER", 35);
+				gameOverText.setFillColor(sf::Color::Red);
+				gameOverText.setPosition(sf::Vector2f(BOARD_OFFSET_X + 15.0f, 150.0f)); 
+				window.draw(gameOverText);
+				
+				sf::Text replayText(font, "MODO REPLAY\n\n[ <- ] Retroceder\n[ -> ] Avanzar\n[ R ] Repetir Todo", 18);
+				replayText.setFillColor(sf::Color::Yellow);
+				replayText.setPosition(sf::Vector2f(BOARD_OFFSET_X + 20.0f, 250.0f)); 
+				window.draw(replayText);
+			}
+		}
 	}
 	window.display();
 }
@@ -420,21 +457,30 @@ void GameEngine::handlePausedInput(sf::Keyboard::Key key){
 		break;
 	}
 }
-//Controla el replay o jugar otra partida (Aún no lo he comprobado).
+//Controla el historial de los movimientos hechos en la partida una vez que finaliza.
 void GameEngine::handleReplayInput(sf::Keyboard::Key key){
 	MovePiece outMove;
+	if (key == sf::Keyboard::Key::Left || key == sf::Keyboard::Key::Right) {
+		isAutoReplay = false; 
+	}
 	if (key == sf::Keyboard::Key::Left) {
 		if (movList.undo(outMove)) {
+			currentPieceType = outMove.pieceType;
 			currentX = outMove.targetX;
 			currentY = outMove.targetY;
 			currentRotation = outMove.rotation;
 		}
 	} else if (key == sf::Keyboard::Key::Right) {
 		if (movList.redo(outMove)) {
+			currentPieceType = outMove.pieceType;
 			currentX = outMove.targetX;
 			currentY = outMove.targetY;
 			currentRotation = outMove.rotation;
 		}
+	} else if (key == sf::Keyboard::Key::R) {
+		movList.resetToStart();
+		isAutoReplay = true;
+		replayTimer = 0.0f;
 	}
 }
 
@@ -449,8 +495,11 @@ GameEngine::GameEngine() {
 	gameTime = 180.0f;
 	dropTimer = 0.0f;
 	dropInterval = 0.8f;
+	replayTimer = 0.0f;
 	isGameOver = false;
 	isPaused = false;
+	isAutoReplay = false;
+	scoreManager.loadFile("scores.txt");
 	if (font.openFromFile("ariblk.ttf")) {
 		fontLoaded = true;
 	} else {

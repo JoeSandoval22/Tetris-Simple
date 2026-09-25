@@ -41,9 +41,11 @@ private:
 	float gameTime;
 	float dropTimer;
 	float dropInterval;
+	float replayTimer;
 	bool isGameOver;
 	bool isPaused;
 	bool fontLoaded;
+	bool isAutoReplay;
 
 	void processInput();
 	void update(float deltaTime);

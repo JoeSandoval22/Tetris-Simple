@@ -49,7 +49,8 @@ bool ScoreManager::loadFile(const std::string& path) {
 bool ScoreManager::saveFile(const std::string& path) {
 	std::ofstream file(path);
 	if(!file.is_open()) return false;
-	for(int i = 0; i < recordCount; i++){
+	int topTen = (recordCount < 10) ? recordCount : 10;
+	for(int i = 0; i < topTen; i++){
 		file << scores[i].playerName << ":" << scores[i].score << "\n";
 	}
 	file.close();
@@ -91,6 +92,12 @@ ScoreRecord ScoreManager::getRecordAt(int index) const {
 		return scores[index];
 	}
 	return ScoreRecord{"", 0};
+}
+//Este método hace un llamado a tres funciones para agregar, ordenar en orden descendente y guardar los puntajes en archivos .txt
+void ScoreManager::registerNewScore(const std::string& name, int newScore){
+	addScore(name, newScore); 
+	sortByQuickSort();        
+	saveFile("scores.txt");
 }
 
 bool ScoreManager::substractRecordCount(int substract){
