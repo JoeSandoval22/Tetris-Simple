@@ -31,5 +31,6 @@ public:
 	bool substractRecordCount(int substract);
 	ScoreRecord getRecordAt(int index) const;
 	void registerNewScore(const std::string& name, int newScore);
+	void runBenchmark();
 };
 #endif // !SCOREMANAGER_H

@@ -1,4 +1,7 @@
 #include "ScoreManager.h"
+#include <chrono>
+#include <iostream>
+#include <cstdlib>
 
 void ScoreManager::quickSort(int low, int high) {
 	if(low < high){
@@ -98,6 +101,33 @@ void ScoreManager::registerNewScore(const std::string& name, int newScore){
 	addScore(name, newScore); 
 	sortByQuickSort();        
 	saveFile("scores.txt");
+}
+
+void ScoreManager::runBenchmark(){
+	int sizes[] = {10, 100, 1000, 10000};
+	std::cout << "N\tBurbuja O(n^2) (ms)\tQuickSort O(n log n) (ms)\n";
+	for(int i = 0; i < 4; i++){
+		int n = sizes[i];
+		recordCount = 0;
+		for(int j = 0; j < n; j++){
+			addScore("Jugador", rand()%100000);
+		}
+		auto starBubble = std::chrono::high_resolution_clock::now();
+		sortByBubbleSort();
+		auto endBubble = std::chrono::high_resolution_clock::now();
+		double timeBubble = std::chrono::duration(endBubble - starBubble).count();
+		
+		recordCount = 0;
+		for(int j = 0; j < n; j++){
+			addScore("Jugador", rand()%100000);
+		}
+		auto starQuick = std::chrono::high_resolution_clock::now();
+		sortByQuickSort();
+		auto endQuick = std::chrono::high_resolution_clock::now();
+		double timeQuick = std::chrono::duration(endQuick - starQuick).count();
+		std::cout << n << "\t" << timeBubble << "ms\t\t" << timeQuick << "ms\n";
+	}
+	recordCount = 0;
 }
 
 bool ScoreManager::substractRecordCount(int substract){

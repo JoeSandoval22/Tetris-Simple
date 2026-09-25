@@ -13,6 +13,8 @@ using namespace std;
 int main (int argc, char *argv[]) {
 	GameEngine engine;
 	engine.run();
+	ScoreManager score;
+	score.runBenchmark();
 	
 	return 0;
 }
