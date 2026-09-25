@@ -2,6 +2,7 @@
 #ifndef GAMEENGINE_H
 #define GAMEENGINE_H
 #include <SFML/Graphics.hpp>
+#include <optional>
 #include "Board.h"
 #include "Piece.h"
 #include "HoldStack.h"
@@ -22,6 +23,7 @@ enum class GameState {
 class GameEngine {
 private:
 	sf::RenderWindow window;
+	sf::Font font;
 
 	Board board;
 	Piece piece;
@@ -41,12 +43,14 @@ private:
 	float dropInterval;
 	bool isGameOver;
 	bool isPaused;
+	bool fontLoaded;
 
 	void processInput();
 	void update(float deltaTime);
 	void render();
 	void renderNextPieces(sf::RectangleShape& cellShape);
 	void renderHoldPiece(sf::RectangleShape& cellShape);
+	void renderScore();
 	
 	bool isValidPosition(int pieceType, int rotation, int newX, int newY) const;
 	void lockPiece();

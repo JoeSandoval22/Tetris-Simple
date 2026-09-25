@@ -44,6 +44,9 @@ void GameEngine::update(float deltaTime) {
 	if(isTimeExpired()){
 		gameTime = 0.0f;
 		currentState = GameState::GAME_OVER;
+		scoreManager.addScore("Jugador", score);
+		scoreManager.sortByQuickSort();
+		scoreManager.saveFile("scores.txt");
 		std::cout << "TIEMPO EXPIRADO..."<<std::endl;
 		return;
 	}
@@ -59,8 +62,11 @@ void GameEngine::update(float deltaTime) {
 			
 			std::cout << "2. Limpiando lineas..." << std::endl;
 			int linesCleared = board.clearCompleteRows(); 
-			if(linesCleared >= 2){
-				timeBonusEvent(linesCleared);
+			if(linesCleared > 0){
+				score += linesCleared * 100 + (linesCleared > 1 ? (linesCleared - 1) * 100 : 0);
+				if(linesCleared >= 2){
+					timeBonusEvent(linesCleared);
+				}
 			}
 			
 			std::cout << "3. Generando nueva pieza..." << std::endl;
@@ -70,6 +76,9 @@ void GameEngine::update(float deltaTime) {
 			
 			if(!isValidPosition(currentPieceType, currentRotation, currentX, currentY)){
 				currentState = GameState::GAME_OVER;
+				scoreManager.addScore("Jugador", score);
+				scoreManager.sortByQuickSort();
+				scoreManager.saveFile("scores.txt");
 				return;
 			}
 		}
@@ -135,10 +144,9 @@ void GameEngine::renderNextPieces(sf::RectangleShape& cellShape){
 }
 
 /*
-Esta función dibuja la pieza que se ha cambiado y la posiciona al aldo izquierdo del tablero.
-Esto surgió debido a un error que no pude solucionar y que decidí transformarlo en parte de la dinámica.Ahora esa pieza se puede ver 
-como si fuera un comodín visible para integrarlo cuando sea, además, el cambio a ese comodín reserva la pieza que iba cayendo antes de 
-intercambiarlas.
+Esta función dibuja la pieza que se ha cambiado y la mantien posicionada al lado izquierdo del tablero.
+Esa pieza se puede usar como una especie de comodín para usarse más adelante.
+Cada que se decida utilizar esa pieza esta se va a intercambiar con la pieza que actualmente esté cayendo en el tablero.
 */
 void GameEngine::renderHoldPiece(sf::RectangleShape& cellShape){
 	int holdPieceType = holdStack.peek();
@@ -165,6 +173,17 @@ void GameEngine::renderHoldPiece(sf::RectangleShape& cellShape){
 			}
 		}
 	}
+}
+//Rendirza el puntaje 
+void GameEngine::renderScore(){
+	if (!fontLoaded) return;
+	
+	
+	sf::Text scoreText(font, "SCORE\n" + std::to_string(score), 18);
+	scoreText.setFillColor(sf::Color::White);
+	scoreText.setPosition({20.0f, 200.0f});
+	
+	window.draw(scoreText);
 }
 
 /*
@@ -215,6 +234,7 @@ void GameEngine::render() {
 		}
 		renderNextPieces(cellShape);
 		renderHoldPiece(cellShape);
+		renderScore();
 	}
 	window.display();
 }
@@ -431,6 +451,11 @@ GameEngine::GameEngine() {
 	dropInterval = 0.8f;
 	isGameOver = false;
 	isPaused = false;
+	if (font.openFromFile("ariblk.ttf")) {
+		fontLoaded = true;
+	} else {
+		fontLoaded = false;
+	}
 }
 
 GameEngine::~GameEngine() {
