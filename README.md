@@ -18,7 +18,7 @@ Este proyecto utiliza **SFML 3 (Simple and Fast Multimedia Library)** para la in
 
 ### Opción B: Compilación Manual (Consola G++)
 1. Abrir la terminal en la carpeta raíz del proyecto.
-2. Asegurarse de que el archivo de fuente `arial.ttf` esté en la misma carpeta del ejecutable/proyecto.
+2. Asegurarse de que el archivo de fuente `ariblk.ttf` esté en la misma carpeta del ejecutable/proyecto.
 3. Ejecutar el comando de compilación:
    ```bash
    g++ -std=c++17 src/*.cpp -I/ruta/sfml/include -L/ruta/sfml/lib -lsfml-graphics -lsfml-window -lsfml-system -o tetris
